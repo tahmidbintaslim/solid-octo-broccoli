@@ -1,6 +1,4 @@
-from typing import List, Tuple, Dict
-
-def calculate_reward(events: List[Tuple[str, int, int]]) -> Dict[str, float]:
+def calculate_reward(events):
     # Initialize variables to keep track of user shares and rewards
     user_shares = {}
     user_rewards = {}
@@ -37,7 +35,18 @@ def calculate_reward(events: List[Tuple[str, int, int]]) -> Dict[str, float]:
     
     return user_rewards
 
-# Test cases
-events = [("A", 0, 2), ("B", 2, 1), ("A", 10, -1)]
+# Collect user input for events
+events = []
+while True:
+    user = input("Enter user name (or 'done' to finish): ")
+    if user.lower() == 'done':
+        break
+    timestamp = int(input("Enter timestamp: "))
+    share_adjust = int(input("Enter share adjustment: "))
+    events.append((user, timestamp, share_adjust))
+
+# Calculate and display the reward distribution
 result = calculate_reward(events)
-print(result)  # Expected Output: {"A": 5005.556, "B": 4994.444}
+print("Reward Distribution:")
+for user, reward in result.items():
+    print(f"{user}: {reward}")
