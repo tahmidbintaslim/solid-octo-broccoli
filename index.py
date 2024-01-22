@@ -1,10 +1,11 @@
 def calculate_reward(events: list[tuple[str, int, int]]) -> dict[str, float]:
-    # Your implementation here
+    # Variables to define
     user_shares = {}
     user_rewards = {}
     total_shares = 0
     last_timestamp = 0
-
+    
+    # main loop
     for user, timestamp, share_adjust in sorted(events, key=lambda x: x[1]):
         time_elapsed = timestamp - last_timestamp
         reward_per_share = time_elapsed * 2.778
