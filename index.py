@@ -1,44 +1,33 @@
 def calculate_reward(events: list[tuple[str, int, int]]) -> dict[str, float]:
-    # Constants
-    reward_rate = 2.778  # USDT per second
-    final_time = 3600    # End timestamp
+    RATE_USDT_PER_SEC = 2.778
+    MAX_TIME = 3600
+    user_rewards = {event[0]: 0 for event in events}  # Initialize rewards for each user
+    user_shares = {user: 0 for user, _, _ in events}  # Current shares of each user
 
-    # Check for empty event list
-    if not events:
-        return {}
+    # Include the starting and ending points in the events
+    events = sorted(events + [("END", MAX_TIME, 0)], key=lambda x: x[1])
 
-    # Initialize variables
-    user_shares = {}
-    user_rewards = {}
-    total_shares = 0
-    last_timestamp = 0
+    prev_time = 0
+    for user, time, change in events:
+        # Calculate the rewards for the interval
+        interval = time - prev_time
+        total_shares = sum(user_shares.values())
+        if total_shares > 0 and interval > 0:
+            reward_per_share = (RATE_USDT_PER_SEC * interval) / total_shares
+            for u in user_shares:
+                user_rewards[u] += reward_per_share * user_shares[u]
 
-    # Sort events by timestamp
-    events.sort(key=lambda x: x[1])
+        # Update shares
+        if user in user_shares:
+            user_shares[user] += change
 
-    for user, timestamp, share_adjust in events:
-        # Validate timestamp
-        if timestamp < last_timestamp:
-            raise ValueError("Timestamps must be non-decreasing")
-        time_elapsed = timestamp - last_timestamp
+        prev_time = time
 
-        # Distribute rewards for the elapsed time
-        if total_shares > 0 and time_elapsed > 0:
-            reward_per_share = time_elapsed * reward_rate
-            for u, shares in user_shares.items():
-                user_rewards[u] = user_rewards.get(u, 0) + (shares / total_shares) * reward_per_share
-
-        # Update user shares
-        user_shares[user] = max(user_shares.get(user, 0) + share_adjust, 0)
-        total_shares = sum(user_shares.values())  # Update total shares
-        last_timestamp = timestamp
-
-    # Distribute remaining rewards
-    remaining_time = final_time - last_timestamp
-    if total_shares > 0 and remaining_time > 0:
-        reward_per_share = remaining_time * reward_rate
-        for u, shares in user_shares.items():
-            user_rewards[u] = user_rewards.get(u, 0) + (shares / total_shares) * reward_per_share
-
-    # Round the rewards and return
+    # Round the rewards to 3 decimal places
     return {user: round(reward, 3) for user, reward in user_rewards.items()}
+
+# Test cases
+print("Test 1:", calculate_reward([("A", 0, 2), ("B", 2, 1), ("A", 10, -1)]))  # Provided example
+print("Test 2:", calculate_reward([("A", 0, 5)]))  # Single user, entire duration
+print("Test 3:", calculate_reward([("A", 0, 2), ("B", 10, 2), ("A", 20, -2), ("B", 30, -2)]))  # Multiple changes
+print("Test 4:", calculate_reward([]))  # No users
